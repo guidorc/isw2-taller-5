@@ -1,11 +1,14 @@
 #!./venv/bin/python
 import unittest
+from random import seed
+
 from src.roulette_input_selector import RouletteInputSelector
 
 
 class TestRouletteInputSelector(unittest.TestCase):
 
     def test(self):
+        seed(2)
         selector = RouletteInputSelector(2)
 
         selector.add_new_execution("good", {("crashme", 2)})
@@ -31,3 +34,5 @@ class TestRouletteInputSelector(unittest.TestCase):
         self.assertAlmostEqual(selector.get_energy("bx"), 1/(3**2), places=2)
         self.assertAlmostEqual(selector.get_energy("by"), 1/(3**2), places=2)
         self.assertAlmostEqual(selector.get_energy("bad"), 1/(1**2), places=2)
+
+        self.assertEqual(selector.select(), "bad")
