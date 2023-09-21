@@ -1,22 +1,37 @@
 from typing import List, Set
 from fuzzingbook.Coverage import Location
+from fuzzingbook.MutationFuzzer import FunctionCoverageRunner
 
 
 class MagicFuzzer:
     covered_locations = []
+    contributing_inputs = []
 
 
     def __init__(self, initial_inputs, function_to_call, function_name_to_call = None) -> None:
         """Ejecuta inputs iniciales, almacenando la cobertura obtenida"""
-        pass
+        # Reset mappings
+        self.covered_locations = []
+        self.contributing_inputs = []
+
+        # Execute inputs
+        function_runner = FunctionCoverageRunner(function_to_call)
+        for input in initial_inputs:
+            function_runner.run(input)
+            locations = function_runner.coverage()
+            for loc in locations:
+                if (loc[0] == function_name_to_call) and (loc not in self.covered_locations):
+                    self.covered_locations.append(loc)
+                    if input not in self.contributing_inputs:
+                        self.contributing_inputs.append(input)
 
     def get_contributing_inputs(self) -> List[str]:
         """Retorna la lista de los inputs que aumentaron la cobertura en el orden que fueron ejecutados"""
-        pass
+        return self.contributing_inputs
 
     def get_covered_locations(self) -> Set[Location]:
         """Retorna el conjunto de locaciones cubiertas de todas las ejecuciones"""
-        covered_locations = set()
+        return set(self.covered_locations)
 
 
     def mutate(self, s: str) -> str:
