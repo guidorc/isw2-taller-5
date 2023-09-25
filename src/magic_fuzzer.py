@@ -15,10 +15,10 @@ class MagicFuzzer:
     covered_locations = []
     locations_per_input = {}
     contributing_inputs = []
-    function_name = ""
+    function_name = None
     function = ""
 
-    def __init__(self, initial_inputs, function_to_call, function_name_to_call = None) -> None:
+    def __init__(self, initial_inputs, function_to_call, function_name_to_call=None) -> None:
         """Ejecuta inputs iniciales, almacenando la cobertura obtenida"""
         # Reset mappings
         self.covered_locations = []
@@ -36,7 +36,7 @@ class MagicFuzzer:
         runner.run(input_to_run)
         locations = runner.coverage()
         for loc in locations:
-            if (loc[0] == self.function_name) and (loc not in self.covered_locations):
+            if ((loc[0] == self.function_name) or (self.function_name is None)) and (loc not in self.covered_locations):
                 self.covered_locations.append(loc)
                 if input_to_run not in self.locations_per_input:
                     self.contributing_inputs.append(input_to_run)
@@ -77,9 +77,31 @@ class MagicFuzzer:
         function_runner = FunctionCoverageRunner(self.function)
         self.run_with_coverage(function_runner, mutated_selection)
 
-    def run_until_covered(self, n=None) -> int:
+    def run_until_covered(self) -> int:
         """
         Corre una campania del MagicFuzzer hasta cubrir todas las lineas del programa.
+        Retorna la cantidad de iteraciones realizadas.
+        """
+        lines_covered = set()
+        for loc in self.covered_locations:
+            line = loc[1]
+            lines_covered.add(line)
+
+        iterations = 0
+        while lines_covered != {2, 3, 4, 5, 6}:
+            self.fuzz()
+            # Update covered lines
+            for loc in self.covered_locations:
+                line = loc[1]
+                lines_covered.add(line)
+            iterations += 1
+
+        return lines_covered, iterations
+
+    def run_iterations(self, n=None) -> int:
+        """
+        Corre una campaña del MagicFuzzer.
+        La campaña debe ser ejecutada por n iteraciones (si n no es None), o hasta cubrir todas las líneas del programa.
         Retorna la cantidad de iteraciones realizadas.
         """
         lines_covered = set()
@@ -97,11 +119,3 @@ class MagicFuzzer:
             iterations += 1
 
         return lines_covered, iterations
-
-    def run(self, n = None) -> int:
-        """
-        Corre una campaña del MagicFuzzer.
-        La campaña debe ser ejecutada por n iteraciones (si n no es None), o hasta cubrir todas las líneas del programa.
-        Retorna la cantidad de iteraciones realizadas.
-        """
-        pass
