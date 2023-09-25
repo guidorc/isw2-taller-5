@@ -15,6 +15,8 @@ class MagicFuzzer:
     covered_locations = []
     locations_per_input = {}
     contributing_inputs = []
+    function_name = ""
+    function = ""
 
     def __init__(self, initial_inputs, function_to_call, function_name_to_call = None) -> None:
         """Ejecuta inputs iniciales, almacenando la cobertura obtenida"""
@@ -22,20 +24,25 @@ class MagicFuzzer:
         self.covered_locations = []
         self.contributing_inputs = []
         self.locations_per_input = {}
+        self.function = function_to_call
+        self.function_name = function_name_to_call
 
         # Execute inputs
         function_runner = FunctionCoverageRunner(function_to_call)
         for current_input in initial_inputs:
-            function_runner.run(current_input)
-            locations = function_runner.coverage()
-            for loc in locations:
-                if (loc[0] == function_name_to_call) and (loc not in self.covered_locations):
-                    self.covered_locations.append(loc)
-                    if input not in self.locations_per_input:
-                        self.contributing_inputs.append(input)
-                        self.locations_per_input[input] = [loc]
-                    else:
-                        self.locations_per_input[input].append(loc)
+            self.run_with_coverage(function_runner, current_input)
+
+    def run_with_coverage(self, runner, input_to_run):
+        runner.run(input_to_run)
+        locations = runner.coverage()
+        for loc in locations:
+            if (loc[0] == self.function_name) and (loc not in self.covered_locations):
+                self.covered_locations.append(loc)
+                if input_to_run not in self.locations_per_input:
+                    self.contributing_inputs.append(input_to_run)
+                    self.locations_per_input[input_to_run] = [loc]
+                else:
+                    self.locations_per_input[input_to_run].append(loc)
 
     def get_contributing_inputs(self) -> List[str]:
         """Retorna la lista de los inputs que aumentaron la cobertura en el orden que fueron ejecutados"""
@@ -67,6 +74,8 @@ class MagicFuzzer:
 
         selection = roulette.select()
         mutated_selection = self.mutate(selection)
+        function_runner = FunctionCoverageRunner(self.function)
+        self.run_with_coverage(function_runner, mutated_selection)
 
     def run_until_covered(self, n = None) -> int:
         """
