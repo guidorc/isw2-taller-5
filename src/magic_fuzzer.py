@@ -67,7 +67,7 @@ class MagicFuzzer:
         Elije aleatoriamente un input s usando seleccion de ruleta sobre e(s),
         muta el input s utilizando la función mutate(s), y ejecuta el s mutado
         """
-        roulette = RouletteInputSelector()
+        roulette = RouletteInputSelector(2)
         for s, locations in self.locations_per_input.items():
             s_path = set(locations)
             roulette.add_new_execution(s, s_path)
@@ -77,12 +77,26 @@ class MagicFuzzer:
         function_runner = FunctionCoverageRunner(self.function)
         self.run_with_coverage(function_runner, mutated_selection)
 
-    def run_until_covered(self, n = None) -> int:
+    def run_until_covered(self, n=None) -> int:
         """
         Corre una campania del MagicFuzzer hasta cubrir todas las lineas del programa.
         Retorna la cantidad de iteraciones realizadas.
         """
-        pass
+        lines_covered = set()
+        for loc in self.covered_locations:
+            line = loc[1]
+            lines_covered.add(line)
+
+        iterations = 0
+        while (lines_covered != {2, 3, 4, 5, 6}) and (iterations < n):
+            self.fuzz()
+            # Update covered lines
+            for loc in self.covered_locations:
+                line = loc[1]
+                lines_covered.add(line)
+            iterations += 1
+
+        return lines_covered, iterations
 
     def run(self, n = None) -> int:
         """
